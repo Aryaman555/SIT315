@@ -14,9 +14,9 @@ void ledchange() {
   on = !on;
   if (on) {
     digitalWrite(6, LOW);
-    Serial.println("LED state: LOW");
+    Serial.println("LED state: HIGH");
   } else {
     digitalWrite(6, HIGH);
-    Serial.println("LED state: HIGH");
+    Serial.println("LED state: LOW");
   }
 }
