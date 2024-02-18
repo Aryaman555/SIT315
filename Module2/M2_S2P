@@ -1,39 +1,56 @@
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks; // Import for Parallel
 
-namespace ParallelVectorSum
+namespace VectorAddition
 {
     class Program
     {
-        static void RandomVector(int[] vector, int size)
+        static Random rand = new Random(); // Random number generator
+
+        // Function to fill a vector with random numbers
+        static void RandomVector(int[] vector)
         {
-            Random rand = new Random();
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < vector.Length; i++)
             {
-                vector[i] = rand.Next(100);
+                vector[i] = rand.Next(100); // Generate a random number between 0 and 99
             }
         }
 
         static void Main(string[] args)
         {
-            int size = 100000000;
-            int[] v1 = new int[size];
-            int[] v2 = new int[size];
-            int[] v3 = new int[size];
-            Random rand = new Random();
-            Stopwatch stopwatch = new Stopwatch();
+            int size = 100000000; // Size of the vectors
 
-            stopwatch.Start();
-            RandomVector(v1, size);
-            RandomVector(v2, size);
+            int[] v1 = new int[size]; // First vector
+            int[] v2 = new int[size]; // Second vector
+            int[] v3 = new int[size]; // Result vector
 
+            RandomVector(v1); // Fill v1 with random numbers
+            RandomVector(v2); // Fill v2 with random numbers
+
+            Stopwatch stopwatch = new Stopwatch(); // Stopwatch to measure time
+
+            // Sequential Addition
+            stopwatch.Start(); // Start the stopwatch
             for (int i = 0; i < size; i++)
             {
-                v3[i] = v1[i] + v2[i];
+                v3[i] = v1[i] + v2[i]; // Perform addition sequentially
             }
+            stopwatch.Stop(); // Stop the stopwatch
+            Console.WriteLine($"Sequential Time: {stopwatch.ElapsedMilliseconds} milliseconds"); // Display sequential time
 
-            stopwatch.Stop();
-            Console.WriteLine("Time taken by function: " + stopwatch.ElapsedMilliseconds + " milliseconds");
+            // Parallel Addition
+            v3 = new int[size]; // Reset v3 for parallel addition
+            stopwatch.Reset(); // Reset the stopwatch
+            stopwatch.Start(); // Start the stopwatch
+            Parallel.For(0, size, i => // Parallel loop for addition
+            {
+                v3[i] = v1[i] + v2[i]; // Perform addition in parallel
+            });
+            stopwatch.Stop(); // Stop the stopwatch
+            Console.WriteLine($"Parallel Time: {stopwatch.ElapsedMilliseconds} milliseconds"); // Display parallel time
+
+            Console.ReadLine(); // Keep the console window open
         }
     }
 }
