@@ -1,22 +1,26 @@
-bool on = false;
+const int pirSensor = 2;
+const int pirLed = 7;
 
 void setup() {
-  pinMode(6, OUTPUT);
+  pinMode(pirLed, OUTPUT);
+  pinMode(pirSensor, INPUT);
+
   Serial.begin(9600);
-  attachInterrupt(0, ledchange, FALLING);
 }
 
 void loop() {
-  delay(1000);
+  checkPIR();
+  delay(200);
 }
 
-void ledchange() {
-  on = !on;
-  if (on) {
-    digitalWrite(6, LOW);
-    Serial.println("LED state: HIGH");
+void checkPIR() {
+  if (digitalRead(pirSensor) == HIGH) {
+    Serial.println("Motion detected!");
+    digitalWrite(pirLed, HIGH);
+    delay(2000);
   } else {
-    digitalWrite(6, HIGH);
-    Serial.println("LED state: LOW");
+    Serial.println("No Motion detected!");
+    digitalWrite(pirLed, LOW);
+    delay(2000);
   }
 }
