@@ -1,39 +1,45 @@
-#define PIR_PIN 2
-#define PHOTOSENSOR_PIN A0
-#define EXTERNAL_LED_PIN 7
-
-bool motionDetected = false;
-bool lightDetected = false;
+const int pirSensor = 2;
+const int pirLed = 7;
+const int buzzer = 8;
+const int tmpSensor = A0;
 
 void setup() {
-  pinMode(EXTERNAL_LED_PIN, OUTPUT);
-  pinMode(PIR_PIN, INPUT);
-  pinMode(PHOTOSENSOR_PIN, INPUT);
+  pinMode(pirLed, OUTPUT);
+  pinMode(buzzer, OUTPUT);
+  pinMode(pirSensor, INPUT);
+  pinMode(tmpSensor, INPUT);
+
   Serial.begin(9600);
-  attachInterrupt(digitalPinToInterrupt(PIR_PIN), motionChange, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PHOTOSENSOR_PIN), lightIntensityChange, CHANGE);
 }
 
 void loop() {
-  if (motionDetected || lightDetected) {
-    digitalWrite(EXTERNAL_LED_PIN, HIGH);
-    Serial.println("Motion or Light detected!");
-    delay(1000);
-    motionDetected = false;
-    lightDetected = false;
+  checkPIR();
+  checkTMP();
+  delay(200);
+}
+
+void checkPIR() {
+  if (digitalRead(pirSensor) == HIGH) {
+    Serial.println("Motion detected!");
+    digitalWrite(pirLed, HIGH);
+    delay(2000);
   } else {
-    digitalWrite(EXTERNAL_LED_PIN, LOW);
+    digitalWrite(pirLed, LOW);
   }
-  delay(100);
 }
 
-void motionChange() {
-  motionDetected = !motionDetected;
-}
+void checkTMP() {
+  int temperature = analogRead(tmpSensor);
+  float voltage = temperature * 5.0 / 1024;
+  float celsius = (voltage - 0.5) * 100;
 
-void lightIntensityChange() {
-  int lightIntensity = analogRead(PHOTOSENSOR_PIN);
-  if (lightIntensity > 500) {
-    lightDetected = true;
+  Serial.print("Temperature: ");
+  Serial.print(celsius);
+  Serial.println(" degrees Celsius");
+
+  if (celsius > 75) {
+    digitalWrite(buzzer, HIGH);
+  } else {
+    digitalWrite(buzzer, LOW);
   }
 }
