@@ -1,26 +1,25 @@
-const int pirSensor = 2;
-const int pirLed = 7;
+const int pirPin = 2;
+const int ledPin = 13;
+
+volatile bool motionDetected = false;
 
 void setup() {
-  pinMode(pirLed, OUTPUT);
-  pinMode(pirSensor, INPUT);
+  pinMode(ledPin, OUTPUT);
+  pinMode(pirPin, INPUT);
+  attachInterrupt(digitalPinToInterrupt(pirPin), motionDetectedISR, CHANGE);
 
   Serial.begin(9600);
 }
 
 void loop() {
-  checkPIR();
-  delay(200);
 }
 
-void checkPIR() {
-  if (digitalRead(pirSensor) == HIGH) {
-    Serial.println("Motion detected!");
-    digitalWrite(pirLed, HIGH);
-    delay(2000);
-  } else {
-    Serial.println("No Motion detected!");
-    digitalWrite(pirLed, LOW);
-    delay(2000);
+void motionDetectedISR() {
+  motionDetected = digitalRead(pirPin);
+  if (motionDetected) {
+    Serial.println("Motion detected");
+    digitalWrite(ledPin, HIGH);
+    delay(1000);
+    digitalWrite(ledPin, LOW);
   }
 }
