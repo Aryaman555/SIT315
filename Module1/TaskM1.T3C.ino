@@ -1,45 +1,41 @@
-const int pirSensor = 2;
-const int pirLed = 7;
-const int buzzer = 8;
-const int tmpSensor = A0;
+const int pirPin1 = 2;
+const int pirPin2 = 3;
+const int ledPin1 = 13;
+const int ledPin2 = 12;
+
+volatile bool motionDetected1 = false;
+volatile bool motionDetected2 = false;
 
 void setup() {
-  pinMode(pirLed, OUTPUT);
-  pinMode(buzzer, OUTPUT);
-  pinMode(pirSensor, INPUT);
-  pinMode(tmpSensor, INPUT);
+  pinMode(ledPin1, OUTPUT);
+  pinMode(ledPin2, OUTPUT);
+  pinMode(pirPin1, INPUT);
+  pinMode(pirPin2, INPUT);
+  attachInterrupt(digitalPinToInterrupt(pirPin1), motionDetectedISR1, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(pirPin2), motionDetectedISR2, CHANGE);
 
   Serial.begin(9600);
 }
 
 void loop() {
-  checkPIR();
-  checkTMP();
-  delay(200);
 }
 
-void checkPIR() {
-  if (digitalRead(pirSensor) == HIGH) {
-    Serial.println("Motion detected!");
-    digitalWrite(pirLed, HIGH);
-    delay(2000);
-  } else {
-    digitalWrite(pirLed, LOW);
+void motionDetectedISR1() {
+  motionDetected1 = digitalRead(pirPin1);
+  if (motionDetected1) {
+    Serial.println("Motion detected on PIR1");
+    digitalWrite(ledPin1, HIGH);
+    delay(1000);
+    digitalWrite(ledPin1, LOW);
   }
 }
 
-void checkTMP() {
-  int temperature = analogRead(tmpSensor);
-  float voltage = temperature * 5.0 / 1024;
-  float celsius = (voltage - 0.5) * 100;
-
-  Serial.print("Temperature: ");
-  Serial.print(celsius);
-  Serial.println(" degrees Celsius");
-
-  if (celsius > 75) {
-    digitalWrite(buzzer, HIGH);
-  } else {
-    digitalWrite(buzzer, LOW);
+void motionDetectedISR2() {
+  motionDetected2 = digitalRead(pirPin2);
+  if (motionDetected2) {
+    Serial.println("Motion detected on PIR2");
+    digitalWrite(ledPin2, HIGH);
+    delay(1000);
+    digitalWrite(ledPin2, LOW);
   }
 }
