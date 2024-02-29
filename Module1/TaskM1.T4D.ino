@@ -21,9 +21,9 @@ void setup() {
   pinMode(pirPin3, INPUT);
 
   PCICR |= (1 << PCIE2);
-  PCMSK2 |= (1 << PCINT2);
-  PCMSK2 |= (1 << PCINT1);
-  PCMSK2 |= (1 << PCINT0);
+  PCMSK2 |= (1 << PCINT18);
+  PCMSK2 |= (1 << PCINT19);
+  PCMSK2 |= (1 << PCINT20);
 
   TCCR1A = 0;
   TCCR1B = 0;
