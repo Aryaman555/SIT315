@@ -1,0 +1,151 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+
+// Define the structure for traffic data
+public struct TrafficData {
+    public DateTime Timestamp;
+    public int LightId;
+    public int CarsPassed;
+
+    public TrafficData(DateTime timestamp, int lightId, int carsPassed) {
+        Timestamp = timestamp;
+        LightId = lightId;
+        CarsPassed = carsPassed;
+    }
+}
+
+// Bounded Buffer Implementation
+public class BoundedBuffer {
+    private Queue<TrafficData> buffer;
+    private int capacity;
+    private readonly object lockObj = new object();
+
+    public BoundedBuffer(int capacity) {
+        this.capacity = capacity;
+        buffer = new Queue<TrafficData>();
+    }
+
+    public void Push(TrafficData data) {
+        lock (lockObj) {
+            while (buffer.Count >= capacity) {
+                Monitor.Wait(lockObj);
+            }
+            buffer.Enqueue(data);
+            Monitor.Pulse(lockObj);
+        }
+    }
+
+    public TrafficData Pop() {
+        lock (lockObj) {
+            while (buffer.Count == 0) {
+                Monitor.Wait(lockObj);
+            }
+            TrafficData data = buffer.Dequeue();
+            Monitor.Pulse(lockObj);
+            return data;
+        }
+    }
+}
+
+public class Program {
+    // Producer function
+    public static void Producer(BoundedBuffer buffer, int lightId) {
+        while (true) {
+            // Simulate traffic data generation
+            DateTime timestamp = DateTime.Now;
+            Random rand = new Random();
+            int carsPassed = rand.Next(100); // Random number of cars passed
+
+            // Create TrafficData object
+            TrafficData data = new TrafficData(timestamp, lightId, carsPassed);
+
+            // Push data into the buffer
+            buffer.Push(data);
+
+            // Sleep for 5 minutes
+            Thread.Sleep(5 * 60 * 1000);
+        }
+    }
+
+    // Consumer function
+    public static void Consumer(BoundedBuffer buffer) {
+        while (true) {
+            // Pop data from the buffer
+            TrafficData data = buffer.Pop();
+
+            // Process traffic data
+            Console.WriteLine($"Timestamp: {data.Timestamp}, Light ID: {data.LightId}, Cars Passed: {data.CarsPassed}");
+        }
+    }
+
+    // Function to read data from file and populate the buffer
+    public static void ReadFromFileAndPopulateBuffer(BoundedBuffer buffer, string filename) {
+        using (StreamReader sr = new StreamReader(filename)) {
+            string line;
+            while ((line = sr.ReadLine()) != null) {
+                string[] parts = line.Split(',');
+                if (parts.Length == 3 && DateTime.TryParse(parts[0], out DateTime timestamp) &&
+                    int.TryParse(parts[1], out int lightId) && int.TryParse(parts[2], out int carsPassed)) {
+                    TrafficData data = new TrafficData(timestamp, lightId, carsPassed);
+                    buffer.Push(data);
+                }
+            }
+        }
+    }
+
+    public static void Main(string[] args) {
+        // Create a bounded buffer
+        BoundedBuffer buffer = new BoundedBuffer(100); // Set buffer capacity
+
+        // Read data from file and populate the buffer
+        string filename = "traffic_data.txt";
+        if (File.Exists(filename)) {
+            ReadFromFileAndPopulateBuffer(buffer, filename);
+        }
+        else {
+            Console.WriteLine($"File '{filename}' not found.");
+            return;
+        }
+
+        // Prompt user to specify number of producer and consumer threads
+        Console.Write("Enter number of producer threads: ");
+        string numProducersInput = Console.ReadLine();
+        Console.Write("Enter number of consumer threads: ");
+        string numConsumersInput = Console.ReadLine();
+
+        int numProducers, numConsumers;
+        if (int.TryParse(numProducersInput, out numProducers) && int.TryParse(numConsumersInput, out numConsumers)) {
+            // Create producer threads
+            List<Thread> producers = new List<Thread>();
+            for (int i = 0; i < numProducers; i++) {
+                int lightId = i + 1;
+                Thread producerThread = new Thread(() => Producer(buffer, lightId));
+                producers.Add(producerThread);
+                producerThread.Start();
+            }
+
+            // Create consumer threads
+            List<Thread> consumers = new List<Thread>();
+            for (int i = 0; i < numConsumers; i++) {
+                Thread consumerThread = new Thread(() => Consumer(buffer));
+                consumers.Add(consumerThread);
+                consumerThread.Start();
+            }
+
+            // Join producer threads
+            foreach (Thread producer in producers) {
+                producer.Join();
+            }
+
+            // Join consumer threads
+            foreach (Thread consumer in consumers) {
+                consumer.Join();
+            }
+        }
+        else {
+            Console.WriteLine("Invalid input for number of threads.");
+        }
+    }
+}
